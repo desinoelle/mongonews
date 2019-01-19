@@ -1,17 +1,26 @@
-<div class="container-fluid article-container">
-    <div class="card" style="width: 18rem;">
-      <img class="card-img-top" src=".../100px180/" alt="Card image cap">
-      <div class="card-body">
-        <h5 class="card-title">Card title</h5>
-        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-        <div class="container">
-          <div class="row">
-            <a href="#" class="btn btn-primary">Article Notes</a>
-          </div>
-          <div class="row">
-            <a href="#" class="btn btn-primary mt-2">Delete</a>
-          </div>
+<div class="articles">
+    {{#each articles}}
+        {{#if saved}}
+        <div class="article">
+            <img src="{{image}}" style="height:100px;">
+            <a href="{{link}}"><h2>{{title}}</h2></a>
+            <p>{{summary}}</p>
+            <button class="btn btn-primary addNote" data-id="{{_id}}">NOTE</button>
+            <br>
         </div>
-      </div>
-   </div>
+        {{/if}}
+    {{/each}}
 </div>
+
+ {{!-- modal for displaying and creating notes --}}
+  <div id="noteModal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title text-center">Add a note</h4>
+        </div>
+        <div id="notes" class="modal-body"></div>
+      </div>
+    </div>
+  </div>

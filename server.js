@@ -29,103 +29,136 @@ app.use(express.static("public"));
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-// For connecting mongo database to mongoose
-// If deployed, use the deployed database. Otherwise use the local mongoHeadlines database
-//var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
-//mongoose.connect(MONGODB_URI);
+var hbs = require("handlebars");
+//Handlebars each_upto helper
+hbs.registerHelper('each_upto', function(ary, max, options) {
+  if(!ary || ary.length == 0)
+      return options.inverse(this);
+
+  var result = [ ];
+  for(var i = 0; i < max && i < ary.length; ++i)
+      result.push(options.fn(ary[i]));
+  return result.join('');
+});
+
+//Connect to Mongo DB
+mongoose.connect("mongodb://localhost/mongoHeadlines", 
+{ useNewUrlParser: true, useCreateIndex: true });
 
 // Routes
 // Index route
 app.get("/", function(req, res) {
-  res.render("index");
+  db.Article
+    .find({saved: false})
+    .then(function(dbArticle) {
+      var hbsObject = {
+        articles: dbArticle
+      };
+      res.render("index", hbsObject);
+    })
+    .catch(function(err) {
+      res.json(err);
+    });
 });
-
-// Saved articles route
-app.get("/saved", function(req, res) {
-  res.render("saved");
-});
-
-/* // Scraping new articles route
+// Scraping route for NYT articles
 app.get("/scrape", function(req, res) {
-  axios.get("http://www.echojs.com/").then(function(response) {
-    // Load cherrio to $
+  var counter = 0;
+  axios.get("https://www.nytimes.com").then(function(response) {
+
     var $ = cheerio.load(response.data);
 
-    // Grab h2 headings and insert article title and link
-    $("article h2").each(function(i, element) {
+    $("article.story").each(function(i, element) {
+
       var result = {};
 
-      result.title = $(this)
-        .children("a")
-        .text();
-      result.link = $(this)
-        .children("a")
-        .attr("href");
+      result.link = $(this).find("a").attr("href");
+      result.title = $(this).find("h2").text().trim();
+      result.summary = $(this).find("p.summary").text();
+      result.image = $(this).find("a").find("img").attr("src");
+      result.saved = false;
 
-      // Create a new Article with scraping info
-      db.Article.create(result)
+      if (result.title && result.link && result.summary) {
+        counter++;
+        db.Article
+        .create(result)
         .then(function(dbArticle) {
-          console.log(dbArticle);
+          res.send("You've scraped " + counter + " articles!");
         })
         .catch(function(err) {
-          console.log(err);
+          res.json(err);
         });
+      };
     });
-
-    // Confirm scrape
-    res.send("Scrape Complete");
   });
 });
 
-// Route for getting all Articles from the db
-app.get("/articles", function(req, res) {
-  // Grab every document in the Articles collection
-  db.Article.find({})
+// Route for grabbing a specific Article by id, update status to "saved"
+app.post("/save/:id", function(req, res) {
+  db.Article
+    .update({ _id: req.params.id }, { $set: {saved: true}})
     .then(function(dbArticle) {
-      // If we were able to successfully find Articles, send them back to the client
-      res.json(dbArticle);
+      res.json("dbArticle");
     })
     .catch(function(err) {
-      // If an error occurred, send it to the client
       res.json(err);
     });
 });
 
-// Route for grabbing a specific Article by id, populate it with it's note
-app.get("/articles/:id", function(req, res) {
-  // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-  db.Article.findOne({ _id: req.params.id })
-    // ..and populate all of the notes associated with it
-    .populate("note")
+// Route for grabbing a specific Article by id, update status to "unsaved"
+app.post("/unsave/:id", function(req, res) {
+  db.Article
+    .update({ _id: req.params.id }, { $set: {saved: false}})
     .then(function(dbArticle) {
-      // If we were able to successfully find an Article with the given id, send it back to the client
-      res.json(dbArticle);
+      res.json("dbArticle");
     })
     .catch(function(err) {
-      // If an error occurred, send it to the client
       res.json(err);
     });
 });
 
-// Route for saving/updating an Article's associated Note
-app.post("/articles/:id", function(req, res) {
-  // Create a new note and pass the req.body to the entry
-  db.Note.create(req.body)
-    .then(function(dbNote) {
-      // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
-      // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
-      // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
-      return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
+//Route to render Articles to handlebars and populate with saved articles
+app.get("/saved", function(req, res) {
+  db.Article
+  .find({ saved: true })
+  .then(function(dbArticles) {
+    var hbsObject = {
+      articles: dbArticles
+    };
+    res.render("saved", hbsObject);
+  })
+  .catch(function(err){
+    res.json(err);
+  });
+});
+
+
+//get route to retrieve all notes for a particlular article
+app.get('/getNotes/:id', function (req,res){
+  db.Article
+    .findOne({ _id: req.params.id })
+    .populate('note')
+    .then(function(dbArticle){
+      res.json(dbArticle);
+    })
+    .catch(function(err){
+      res.json(err);
+    });
+});
+
+//post route to create a new note in the database
+app.post('/createNote/:id', function (req,res){
+  db.Note
+    .create(req.body)
+    .then(function(dbNote){
+      return db.Article.findOneAndUpdate( {_id: req.params.id }, { note: dbNote._id }, { new:true });//saving reference to note in corresponding article
     })
     .then(function(dbArticle) {
-      // If we were able to successfully update an Article, send it back to the client
       res.json(dbArticle);
     })
     .catch(function(err) {
-      // If an error occurred, send it to the client
       res.json(err);
     });
-}); */
+});
 
 
 // Start the server
