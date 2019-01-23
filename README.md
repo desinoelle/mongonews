@@ -1,14 +1,11 @@
-# News-Scraper
+# Mongo News Scraper
 
-News Scraper employs client-side web scraping to allow the user to scrape the US section of the New York Times and return articles, save articles, and comment on the articles.
+This Mongo News Scraper allows the user to scrape the New York Times and return articles, save articles, and create notes on the saved articles.
 
-## Developer's Toolkit
+# Technologies Used
 
-News Scraper was built with...
-1. Front-End: HTML, CSS, Handlebars, Google Fonts, Font Awesome
-2. Back-end: Node, Express, Mongo DB, and npm packages Cheerio and Axios
+1. Front-End: HTML, CSS, Handlebars
+2. Back-end: Node, Express, Mongoose, Cheerio, and Axios
 
 ## Heroku Link
-[Deployed on Heroku](https://salty-chamber-37652.herokuapp.com/)
-
-![screenshot](/public/assets/img/news-scraper-screenshot.png)
+[Deployed on Heroku](https://serene-shore-21269.herokuapp.com/)
