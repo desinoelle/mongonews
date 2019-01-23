@@ -1,7 +1,7 @@
 {
   "name": "mongonews",
   "version": "1.0.0",
-  "description": "",
+  "description": "News Scraper employs client-side web scraping to allow the user to scrape the US section of the New York Times and return articles, save articles, and comment on the articles.",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -22,7 +22,7 @@
     "cheerio": "^1.0.0-rc.2",
     "express": "^4.16.4",
     "express-handlebars": "^3.0.0",
-    "mongoose": "^5.4.4",
+    "mongoose": "^5.4.6",
     "morgan": "^1.9.1"
   }
 }

@@ -1,96 +1,83 @@
-//Click to scrape
-$(document).on("click", "#scrape", function(){
-  $.get( "/scrape", function (req, res) {
-      console.log(res);
-  }).then(function(data) {
-      window.location.href = "/";
-  });
-});
+$(document).ready(function() {
 
-$(document).on("click", ".home", function(){
-  $.get( "/", function (req, res) {
-      console.log(res);
-  }).then(function(data) {
-      window.location.href = "/";
-  });
-});
+    // Scrape articles
+    $("#scrape-btn").on("click", function() {
+        $.ajax({
+            method: "GET",
+            url: "/scrape",
+        }).done(function(data) {
+            console.log(data)
+            window.location = "/"
+        });
+    });
 
-//Click to save article
-$(document).on("click", ".save", function(e){
-  $(this).parent().remove();
-  var articleId = $(this).attr("data-id");
-  $.ajax({
-      url: '/save/' + articleId,
-      type: "POST"
-  }).done(function(data) {
-      $(".article").filter("[data-id='" + articleId + "']").remove();
-  });
-});
+    // Clear articles
+    $("#clear-btn").on("click", function() {
+        $.ajax({
+            method: "GET",
+            url: "/clear"
+        }).done(function(data) {
+            console.log("CLEAR")
+            window.location = '/'
+        });
+    });
 
-//Click to view saved article
-$(document).on("click", ".saved", function() {
-  $.get( "/saved", function (req, res) {
-      console.log(res);
-  }).then(function(data) {
-      window.location.href = "/saved";
-  });
-});
+    // Save an article
+    $(".save").on("click", function() {
+        var thisId = $(this).attr("data-id");
+        $.ajax({
+            method: "POST",
+            url: "/articles/save/" + thisId
+        }).done(function(data) {
+            window.location = "/"
+        });
+    });
 
-//Click to delete article after being saved
-$(document).on("click", ".unsave", function(){
-  $(this).parent().remove();
-  var articleId = $(this).attr("data-id");
+    // Delete from saved
+    $(".delete").on("click", function() {
+        var thisId = $(this).attr("data-id");
+        $.ajax({
+            method: "POST",
+            url: "/articles/delete/" + thisId
+        }).done(function(data) {
+            window.location = "/saved"
+        });
+    });
 
-  $.ajax({
-      url: '/unsave/' + articleId,
-      type: "POST"
-  }).done(function(data) {
-      $(".article").filter("[data-id='" + articleId + "']").remove();
-  });
-})
-
-//click event to open note modal and populate with notes
-$(document).on('click', '.addNote', function (e){
-  $("#notes").empty();
-  var thisId = $(this).attr("data-id");
-
-  $.ajax({
-    method: "GET",
-    url: "/getNotes/" + thisId
-  }).then(function(data){
-      console.log(data);
-        $("#notes").append("<h2>" + data.title + "</h2>");
-        $("#notes").append("<h3 id='notestitle'></h3>");
-        $("#notes").append("<p id='notesbody'></p>");
-        $("#notes").append("<div class='form-group'><label for='title'>Title: </label><input id='titleinput' class='form-control' name='title'></div>");
-        $("#notes").append("<div class='form-group'><label for='body'>Note: </label><input id='bodyinput' class='form-control' name='body'></div>");
-        $("#notes").append("<button class='btn btn-default' data-id='" + data._id + "' id='savenote'>Save Note</button>");
-
-        if (data.note) {
-          $("#notestitle").text(data.note.title);
-          $("#notesbody").text(data.note.body);
+    // Save note
+    $(".save-note-btn").on("click", function() {
+        var thisId = $(this).attr("data-id");
+        if (!$("#note-Body" + thisId).val()) {
+            alert("please enter a note to save")
+        }else {
+            $.ajax({
+                method: "POST",
+                url: "/notes/save/" + thisId,
+                data: {
+                    text: $("#note-Body" + thisId).val()
+                }
+            }).done(function(data) {
+              // Log the response
+              console.log(data);
+              // Empty the notes section
+              $("#note-Body" + thisId).val("");
+              $(".modalNote").modal("hide");
+              window.location = "/saved"
+            });
         }
     });
-    $('#noteModal').modal();
-});
 
-//click event to create a note
-$(document).on('click', '#savenote', function () {
-  var thisId = $(this).attr("data-id");
-
-  $.ajax({
-    method: "POST",
-    url: "/createNote/" + thisId,
-    data: {
-      title: $("#titleinput").val(),
-      body: $("#bodyinput").val()
-    }
-  }).then(function(data) {
-      console.log(data);
-      $("#notes").empty();
+    // Delete note
+    $(".delete-note-btn").on("click", function() {
+        var noteId = $(this).attr("data-note-id");
+        var articleId = $(this).attr("data-article-id");
+        $.ajax({
+            method: "DELETE",
+            url: "/notes/delete/" + noteId + "/" + articleId
+        }).done(function(data) {
+            console.log(data)
+            $(".modalNote").modal("hide");
+            window.location = "/saved"
+        });
     });
-
-  $("#titleinput").val("");
-  $("#bodyinput").val("");
-  $('#noteModal').modal('hide');
 });

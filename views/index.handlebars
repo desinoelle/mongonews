@@ -1,14 +1,19 @@
-<div class="articles">
-    <div class="load"></div>
-    {{#each_upto articles 8}}
-        {{#unless saved}}
-        <div class="article">
-            <img src="{{image}}" style="height:100px;">
-            <a href="{{link}}"><h2>{{title}}</h2></a>
-            <p>{{summary}}</p>
-            <button class="btn btn-primary save" data-id="{{_id}}">SAVE</button>
-            <br>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            {{#each article}}
+            <div class="card">
+                <div class="card-body article">
+                    <h5 class="card-title headline">{{this.title}}</h5>
+                    <a href={{this.link}} class="card-link">Read Article on New York Times</a>
+                    <br>
+                    <br>
+                    <p class="card-text">Article Summary: {{this.summary}}</p>
+                    <br>
+                    <button type="button" class="btn btn-success save" data-id={{this._id}}>Save Article</button>
+                </div>
+            </div>
+            {{/each}}
         </div>
-        {{/unless}}
-    {{/each_upto}}
+    </div>
 </div>
